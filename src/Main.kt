@@ -1,13 +1,14 @@
 import org.json.JSONObject
 import java.awt.Toolkit
 import java.io.BufferedReader
+import java.io.BufferedWriter
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
 import java.util.zip.GZIPInputStream
 
 object Main {
-    const val CLIENT_JSON_LOG = "ClientJson.log"
+    private const val CLIENT_JSON_LOG = "ClientJson.log"
 
     @JvmStatic
     fun main(args: Array<String>) {
@@ -27,9 +28,7 @@ object Main {
                         val reader = it.bufferedReader()
                         reader.forEachLine { line ->
                             uuid = uuid ?: takeUuidIfNeeded(line)
-                            val humanReadable = parseJson(line)
-                            writer.write(humanReadable)
-                            writer.newLine()
+                            parseLine(writer, line)
                         }
                     }
                 }
@@ -37,9 +36,7 @@ object Main {
                     this.useLines {lines->
                         lines.forEach {line->
                             uuid = uuid ?: takeUuidIfNeeded(line)
-                            val humanReadable = parseJson(line)
-                            writer.write(humanReadable)
-                            writer.newLine()
+                            parseLine(writer, line)
                         }
                     }
                 }
@@ -51,6 +48,12 @@ object Main {
         }
 
         Toolkit.getDefaultToolkit().beep();
+    }
+
+    private fun parseLine(writer: BufferedWriter, line: String){
+        val humanReadable = parseJson(line)
+        writer.write(humanReadable)
+        writer.newLine()
     }
 
     private fun takeUuidIfNeeded(line: String): String? {
