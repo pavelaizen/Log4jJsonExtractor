@@ -1,11 +1,13 @@
 import org.json.JSONObject
 import java.awt.Toolkit
+import java.io.BufferedReader
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
 import java.util.zip.GZIPInputStream
 
 object Main {
+    const val CLIENT_JSON_LOG = "ClientJson.log"
 
     @JvmStatic
     fun main(args: Array<String>) {
@@ -18,8 +20,8 @@ object Main {
         zips.sortBy {
             it.name
         }
-        File(localPath, "_temp.log").also {
-            it.outputStream().bufferedWriter().use { writer ->
+        File(localPath, "_temp.log").also {outputFile->
+            outputFile.outputStream().bufferedWriter().use { writer ->
                 zips.forEach { gz ->
                     GZIPInputStream(gz.inputStream()).use {
                         val reader = it.bufferedReader()
@@ -31,9 +33,20 @@ object Main {
                         }
                     }
                 }
+                File(localPath, CLIENT_JSON_LOG).takeIf { it.exists() }?.run {
+                    this.useLines {lines->
+                        lines.forEach {line->
+                            uuid = uuid ?: takeUuidIfNeeded(line)
+                            val humanReadable = parseJson(line)
+                            writer.write(humanReadable)
+                            writer.newLine()
+                        }
+                    }
+                }
             }
+
             if (uuid != null) {
-                it.renameTo(File(localPath, "$uuid.log"))
+                outputFile.renameTo(File(localPath, "$uuid.log"))
             }
         }
 
